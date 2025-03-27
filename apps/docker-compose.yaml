@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16
+
+  web:
+    build:
+      context: rails-mri
+    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+    environment:
+      - SECRET_KEY_BASE_DUMMY=abc123
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: '512M'
+
+
+    
