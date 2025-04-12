@@ -1,2 +1,2 @@
 [tools]
-ruby = "jruby"
+ruby = "truffleruby+graalvm"
