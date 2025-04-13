@@ -7,3 +7,10 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
+def no_posts? = Post.count == 0
+
+def populate_database
+  1000.times { |n| Post.create(title: "Title #{n}", content: "Some content") }
+end
+
+populate_database if no_posts?

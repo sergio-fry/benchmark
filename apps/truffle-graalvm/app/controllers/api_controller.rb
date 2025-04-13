@@ -4,7 +4,6 @@ class ApiController < ApplicationController
   end
 
   def db
-    populate_database if no_posts?
     render json: { count: Post.count, post: Post.find(random_id).attributes }
   end
 
@@ -21,11 +20,5 @@ class ApiController < ApplicationController
   
   def random_id
     Post.select(:id).order("random()").first.id
-  end
-
-  def no_posts? = Post.count == 0
-
-  def populate_database
-    1000.times { |n| Post.create(title: "Title #{n}", content: "Some content") }
   end
 end
