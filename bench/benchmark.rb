@@ -100,23 +100,33 @@ class Throughput
   end
 
   def rps
-    concurrency = 0
-    rps = 0
+    measurement[:rps]
+  end
 
-    loop do
-      concurrency += 1
-      @logger.info "Concurrency = #{concurrency}"
-      new_rps = ThroughputWithConcurrency.new(@url, concurrency:, accuracity: @accuracity, logger: @logger).rps
+  def concurrency
+    measurement[:concurrency]
+  end
 
-      if new_rps > rps
-        rps = new_rps
-        @logger.info "Throughput with concurrency=#{concurrency}: #{rps} r/s"
-      else
-        break
+  def measurement
+    @measurement ||= begin
+      concurrency = 0
+      rps = 0
+
+      loop do
+        concurrency += 1
+        @logger.info "Concurrency = #{concurrency}"
+        new_rps = ThroughputWithConcurrency.new(@url, concurrency:, accuracity: @accuracity, logger: @logger).rps
+
+        if new_rps > rps
+          rps = new_rps
+          @logger.info "Throughput with concurrency=#{concurrency}: #{rps} r/s"
+        else
+          break
+        end
       end
-    end
 
-    rps
+      { rps:, concurrency: }
+    end
   end
 end
 
@@ -139,8 +149,8 @@ case format
 when "text"
   puts Throughput.new(ARGV[0], accuracity:, logger:).rps
 when "json"
-  throutput = Throughput.new(ARGV[0], accuracity:, logger:)
-  puts { url: ARGV[0], accuracity:, rps: throupught.rps, concurrency: throughput.concurrency }.to_json
+  throughput = Throughput.new(ARGV[0], accuracity:, logger:)
+  puts({ url: ARGV[0], accuracity:, rps: throughput.rps, concurrency: throughput.concurrency }.to_json)
 else
   logger.error "Unknown output format '#{format}'"
 end
