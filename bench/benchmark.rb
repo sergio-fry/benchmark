@@ -27,41 +27,29 @@ class Throughput
   end
 
   def rps
-    warmup
+    warmup(1)
 
     ApacheBenchmark.new(url: @url, concurrency: @concurrency, time: 10).rps
   end
 
-  def warmup
+  def warmup(time)
     request_per_second = 0
-    times = 0
-    runs = 0
+    downs = 0
 
     loop do
-      times += 1
-      runs += 1
+      new_value = ApacheBenchmark.new(url: @url, concurrency: @concurrency, time:).rps
 
-      new_value = ApacheBenchmark.new(url: @url, concurrency: @concurrency, time: 1).rps
+      puts({downs:, request_per_second:, new_value:})
 
-      puts({times:, request_per_second:, new_value:, diff: diff_in_percent(request_per_second, new_value)})
-
-      if diff_in_percent(request_per_second, new_value) > 10
-        times = 0
-        break if runs > 15
+      if new_value < request_per_second
+        downs += 1 
       else
-        if times > 5
-          break
-        end
+        request_per_second = new_value
       end
 
-      request_per_second = new_value
+
+      break if downs > 10
     end
-  end
-
-  def diff_in_percent(value1, value2)
-    return 100 if value2.zero?
-
-    ((value1 - value2).to_f.abs / value2) * 100
   end
 end
 
@@ -86,7 +74,7 @@ class OptimalConcurrency
       end
     end
 
-    concurrency
+    { concurrency:, rps: }
   end
 end
 
