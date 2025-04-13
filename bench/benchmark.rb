@@ -1,16 +1,20 @@
 require 'open3'
+require 'logger'
+require 'json'
 
 class ApacheBenchmark
-  def initialize(url:, concurrency:, time:)
+  def initialize(url:, concurrency:, time:, logger:)
     @url = url
     @concurrency = concurrency
     @time = time
+    @logger = logger
   end
 
   def rps
     stdout, stderr, status = Open3.capture3("ab -k -t #{@time} -c #{@concurrency} #{@url}")
 
     unless status.success?
+      @logger.error stderr
       return 0
     end
 
@@ -21,10 +25,11 @@ class ApacheBenchmark
 end
 
 class ThroughputWithConcurrency
-  def initialize(url, concurrency:, accuracity: 0.05)
+  def initialize(url, concurrency:, accuracity: 0.95, logger:)
     @url = url
     @concurrency = concurrency
     @accuracity = accuracity
+    @logger = logger
   end
 
   def rps
@@ -34,16 +39,20 @@ class ThroughputWithConcurrency
   end
 
   def stable_throughput
-    time = 3
-    current = ApacheBenchmark.new(url: @url, concurrency: @concurrency, time: 1).rps
+    time = 10
+    current = ApacheBenchmark.new(url: @url, concurrency: @concurrency, time: 10, logger: @logger).rps
 
     loop do
-      new_value = ApacheBenchmark.new(url: @url, concurrency: @concurrency, time:).rps
-      puts "Measuring #{time} sec: #{new_value} r/s (acc #{accuracity(current, new_value).round(4) * 100}%)"
+      new_value = ApacheBenchmark.new(url: @url, concurrency: @concurrency, time:, logger: @logger).rps
+      @logger.info "Measuring #{time} sec: #{new_value} r/s (acc #{accuracity(current, new_value).round(4) * 100}%)"
 
-      break if diviation(current, new_value) < @accuracity
+      if accuracity(current, new_value) > @accuracity
+        current = new_value
+        break
+      else
+        current = new_value
+      end
 
-      current = new_value
       time = time * 2
     end
 
@@ -63,7 +72,7 @@ class ThroughputWithConcurrency
     downs = 0
 
     loop do
-      new_value = ApacheBenchmark.new(url: @url, concurrency: @concurrency, time:).rps
+      new_value = ApacheBenchmark.new(url: @url, concurrency: @concurrency, time:, logger: @logger).rps
 
       diff = new_value - record
 
@@ -76,7 +85,7 @@ class ThroughputWithConcurrency
         diff_message = "(+#{diff.round(2)} r/s)"
       end
 
-      puts "Warming UP: #{new_value} r/s #{diff_message}"
+      @logger.info "Warming UP: #{new_value} r/s #{diff_message}"
 
       break if downs > 10
     end
@@ -84,9 +93,10 @@ class ThroughputWithConcurrency
 end
 
 class Throughput
-  def initialize(url, accuracity: 0.05)
+  def initialize(url, accuracity: 0.95, logger:)
     @url = url
     @accuracity = accuracity
+    @logger = logger
   end
 
   def rps
@@ -95,12 +105,12 @@ class Throughput
 
     loop do
       concurrency += 1
-      puts "Concurrency = #{concurrency}"
-      new_rps = ThroughputWithConcurrency.new(@url, concurrency:, accuracity: @accuracity).rps
+      @logger.info "Concurrency = #{concurrency}"
+      new_rps = ThroughputWithConcurrency.new(@url, concurrency:, accuracity: @accuracity, logger: @logger).rps
 
       if new_rps > rps
         rps = new_rps
-        puts "Throughput with concurrency=#{concurrency}: #{rps} r/s"
+        @logger.info "Throughput with concurrency=#{concurrency}: #{rps} r/s"
       else
         break
       end
@@ -110,4 +120,27 @@ class Throughput
   end
 end
 
-puts Throughput.new(ARGV[0], accuracity: 0.01).rps
+logger = Logger.new(STDOUT)
+logger.formatter = proc do |severity, datetime, progname, msg|
+  "#{msg}\n"
+end
+
+if ENV.fetch('VERBOSE', 'false') == 'true'
+  logger.level = :debug
+else
+  logger.level = :error
+end
+
+accuracity = ENV.fetch("ACCURACITY", "0.99").to_f
+logger.info "Target accuracity = #{accuracity}"
+
+format = ENV.fetch("FORMAT", "text")
+case format
+when "text"
+  puts Throughput.new(ARGV[0], accuracity:, logger:).rps
+when "json"
+  throutput = Throughput.new(ARGV[0], accuracity:, logger:)
+  puts { url: ARGV[0], accuracity:, rps: throupught.rps, concurrency: throughput.concurrency }.to_json
+else
+  logger.error "Unknown output format '#{format}'"
+end
