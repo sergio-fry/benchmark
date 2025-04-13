@@ -84,8 +84,6 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    database: truffle_graalvm_production
-    username: truffle_graalvm
     password: <%= ENV["TRUFFLE_GRAALVM_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production
