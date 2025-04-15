@@ -4,6 +4,9 @@ services:
       dockerfile: rails.dockerfile
       context: rails
 
+    ports:
+      - 8080:8080
+
   tfb-database:
     build:
       dockerfile: postgres.dockerfile
