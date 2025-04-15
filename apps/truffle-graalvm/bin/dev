@@ -1,2 +1,0 @@
-#!/usr/bin/env truffleruby
-exec "./bin/rails", "server", *ARGV
