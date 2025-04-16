@@ -3,6 +3,7 @@ services:
     build:
       dockerfile: rails.dockerfile
       context: rails
+      platforms: [linux/amd64]
 
     ports:
       - 8080:8080
@@ -14,6 +15,19 @@ services:
     build:
       dockerfile: rails-truffle.dockerfile
       context: rails
+      platforms: [linux/amd64]
+
+    ports:
+      - 8080:8080
+
+    depends_on:
+      - tfb-database
+
+  rails-truffle-graalvm:
+    build:
+      dockerfile: rails-truffle-graalvm.dockerfile
+      context: rails
+      platforms: [linux/amd64]
 
     ports:
       - 8080:8080
@@ -25,6 +39,7 @@ services:
     build:
       dockerfile: rails-jruby.dockerfile
       context: rails
+      platforms: [linux/amd64]
 
     ports:
       - 8080:8080

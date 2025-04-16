@@ -1,11 +1,9 @@
-FROM ghcr.io/graalvm/truffleruby-community:24.1.0-debian
+FROM ghcr.io/sergio-fry/truffleruby-jvm
 
 EXPOSE 8080
 WORKDIR /rails
 
-RUN apt-get update -yqq && \
-  apt-get install -yqq --no-install-recommends redis-server libpq-dev ruby-dev \
-  zlib1g-dev liblzma-dev xz-utils git-core build-essential
+RUN apt-get update -yqq && apt-get install -yqq --no-install-recommends redis-server
 
 COPY ./Gemfile* /rails/
 
