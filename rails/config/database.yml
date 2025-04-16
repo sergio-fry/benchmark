@@ -25,7 +25,8 @@ production_postgresql:
   adapter: postgresql
   encoding: unicode
 
+# Does not work!
 production_jdbcpostgresql:
   <<: *default
-  adapter: jdbc
-  encoding: unicode
+  adapter: jdbcpostgresql
+  #url: "postgresql://benchmarkdbuser:benchmarkdbpass@tfb-database:5432/hello_world?timeout=5000&encoding=unicode"
