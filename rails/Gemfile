@@ -9,7 +9,7 @@ group :mysql, optional: true do
 end
 
 group :postgresql, optional: true do
-  gem 'activerecord-jdbcmysql-adapter', platforms: :jruby
+  gem 'activerecord-jdbcpostgresql-adapter', platforms: :jruby
   gem 'pg', '~> 1.5', platforms: %i[ruby mswin]
 end
 

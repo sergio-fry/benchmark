@@ -56,9 +56,9 @@ GEM
       timeout (>= 0.4.0)
     activerecord-jdbc-adapter (70.2-java)
       activerecord (~> 7.0)
-    activerecord-jdbcmysql-adapter (70.2-java)
+    activerecord-jdbcpostgresql-adapter (70.2-java)
       activerecord-jdbc-adapter (= 70.2)
-      jdbc-mysql (>= 5.1.36, < 9)
+      jdbc-postgres (>= 9.4, < 43)
     activestorage (7.2.2.1)
       actionpack (= 7.2.2.1)
       activejob (= 7.2.2.1)
@@ -156,7 +156,7 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     jar-dependencies (0.5.5)
-    jdbc-mysql (8.4.0.1)
+    jdbc-postgres (42.6.0)
     jruby-openssl (0.15.3-java)
     json (2.10.1)
     json (2.10.1-java)
@@ -302,7 +302,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  activerecord-jdbcmysql-adapter
+  activerecord-jdbcpostgresql-adapter
   agoo
   falcon (~> 0.47)
   iodine (~> 0.7)
