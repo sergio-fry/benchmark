@@ -7,6 +7,31 @@ services:
     ports:
       - 8080:8080
 
+    depends_on:
+      - tfb-database
+
+  rails-truffle:
+    build:
+      dockerfile: rails-truffle.dockerfile
+      context: rails
+
+    ports:
+      - 8080:8080
+
+    depends_on:
+      - tfb-database
+
+  rails-jruby:
+    build:
+      dockerfile: rails-jruby.dockerfile
+      context: rails
+
+    ports:
+      - 8080:8080
+
+    depends_on:
+      - tfb-database
+
   tfb-database:
     build:
       dockerfile: postgres.dockerfile

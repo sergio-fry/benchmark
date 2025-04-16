@@ -24,3 +24,8 @@ production_postgresql:
   <<: *default
   adapter: postgresql
   encoding: unicode
+
+production_jdbcpostgresql:
+  <<: *default
+  adapter: jdbc
+  encoding: unicode
