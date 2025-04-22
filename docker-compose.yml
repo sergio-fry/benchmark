@@ -1,4 +1,15 @@
 services:
+  nginx:
+    image: nginx
+    ports:
+      - 8080:80
+
+  bench:
+    build:
+      dockerfile: Dockerfile
+      context: bench
+      platforms: [linux/amd64]
+
   rails-mri:
     build:
       dockerfile: rails.dockerfile

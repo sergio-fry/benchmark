@@ -135,13 +135,13 @@ logger.formatter = proc do |severity, datetime, progname, msg|
   "#{msg}\n"
 end
 
-if ENV.fetch('VERBOSE', 'false') == 'true'
+if ENV.fetch('VERBOSE', 'true') == 'true'
   logger.level = :debug
 else
   logger.level = :error
 end
 
-accuracity = ENV.fetch("ACCURACITY", "0.99").to_f
+accuracity = ENV.fetch("ACCURACITY", "0.9").to_f
 logger.info "Target accuracity = #{accuracity}"
 
 format = ENV.fetch("FORMAT", "text")
