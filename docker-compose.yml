@@ -1,3 +1,16 @@
+
+
+x-common-configs: &common-configs
+  environment:
+    - RAILS_MAX_THREADS=1
+  deploy:
+    resources:
+      limits:
+        cpus: 1
+        memory: "2048M"
+  depends_on:
+    - tfb-database
+
 services:
   nginx:
     image: nginx
@@ -11,52 +24,26 @@ services:
       platforms: [linux/amd64]
 
   rails-mri:
+    << : *common-configs
     build:
       dockerfile: rails.dockerfile
       context: rails
       platforms: [linux/amd64]
 
-    ports:
-      - 8080:8080
-
-    depends_on:
-      - tfb-database
 
   rails-truffle:
+    << : *common-configs
     build:
       dockerfile: rails-truffle.dockerfile
       context: rails
       platforms: [linux/amd64]
 
-    ports:
-      - 8080:8080
-
-    depends_on:
-      - tfb-database
-
   rails-truffle-graalvm:
+    << : *common-configs
     build:
       dockerfile: rails-truffle-graalvm.dockerfile
       context: rails
       platforms: [linux/amd64]
-
-    ports:
-      - 8080:8080
-
-    depends_on:
-      - tfb-database
-
-  rails-jruby:
-    build:
-      dockerfile: rails-jruby.dockerfile
-      context: rails
-      platforms: [linux/amd64]
-
-    ports:
-      - 8080:8080
-
-    depends_on:
-      - tfb-database
 
   tfb-database:
     build:
