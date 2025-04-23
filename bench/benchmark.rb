@@ -87,7 +87,7 @@ class ThroughputWithConcurrency
 
       @logger.info "Warming UP: #{new_value} r/s #{diff_message}"
 
-      break if downs > 10
+      break if downs > 20
     end
   end
 end
@@ -125,7 +125,7 @@ class Throughput
         end
       end
 
-      { rps:, concurrency: }
+      { rps:, concurrency: concurrency - 1 }
     end
   end
 end
