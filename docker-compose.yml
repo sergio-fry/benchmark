@@ -1,8 +1,7 @@
 
 
 x-common-configs: &common-configs
-  environment:
-    - RAILS_MAX_THREADS=1
+  env_file: .env.runtime
   deploy:
     resources:
       limits:
@@ -10,6 +9,7 @@ x-common-configs: &common-configs
         memory: "2048M"
   depends_on:
     - tfb-database
+
 
 services:
   nginx:
@@ -19,14 +19,16 @@ services:
     build:
       dockerfile: Dockerfile
       context: bench
-      platforms: [linux/amd64]
+      #platforms: [linux/amd64/v8]
+
+    volumes:
+      - "./bench/:/app"
 
   rails-mri:
     << : *common-configs
     build:
       dockerfile: rails.dockerfile
       context: rails
-      platforms: [linux/amd64]
 
 
   rails-truffle:
@@ -34,14 +36,12 @@ services:
     build:
       dockerfile: rails-truffle.dockerfile
       context: rails
-      platforms: [linux/amd64]
 
   rails-truffle-graalvm:
     << : *common-configs
     build:
       dockerfile: rails-truffle-graalvm.dockerfile
       context: rails
-      platforms: [linux/amd64]
 
   tfb-database:
     build:

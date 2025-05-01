@@ -1,0 +1,53 @@
+#!/bin/bash
+
+SERVICE="$1"
+RAILS_MAX_THREADS="$2"
+CPUS="$3"
+
+rm .env.runtime
+echo "RAILS_MAX_THREADS=$RAILS_MAX_THREADS" >> .env.runtime
+
+docker compose --env-file .env.runtime -f docker-compose.yml -f docker-compose.cpu$CPUS.yml up -d $SERVICE
+
+docker compose run --rm -it bench ruby warmup.rb http://$SERVICE:8080/json
+
+#NUMBER=100000
+#WARMUP_TIME=120
+NUMBER=1000
+WARMUP_TIME=10
+
+function warmup {
+  URL=$1
+
+  docker compose run --rm --remove-orphans -it bench ab -k -t $WARMUP_TIME -n 10000000 -c $RAILS_MAX_THREADS $URL
+}
+function benchmark {
+  URL=$1
+  CONCURRENCY=$2
+
+  RESULT="`docker compose run --rm --remove-orphans -it -e TEST_NAME="cpu=$CPUS, rails_thread=$RAILS_MAX_THREADS, service=$SERVICE" -e NUMBER=$NUMBER -e CONCURRENCY=$CONCURRENCY bench ruby benchmark2.rb $URL`"
+  echo $RESULT
+  echo $RESULT >> results.txt
+}
+
+function benchmark_twice {
+  benchmark $1 $2
+  benchmark $1 $2
+}
+
+
+warmup http://$SERVICE:8080/json
+benchmark_twice http://$SERVICE:8080/json 1
+benchmark_twice http://$SERVICE:8080/json 2
+benchmark_twice http://$SERVICE:8080/json 3
+benchmark_twice http://$SERVICE:8080/json 4
+benchmark_twice http://$SERVICE:8080/json 5
+benchmark_twice http://$SERVICE:8080/json 6
+
+warmup http://$SERVICE:8080/db
+benchmark_twice http://$SERVICE:8080/db 1
+benchmark_twice http://$SERVICE:8080/db 2
+benchmark_twice http://$SERVICE:8080/db 3
+benchmark_twice http://$SERVICE:8080/db 4
+benchmark_twice http://$SERVICE:8080/db 5
+benchmark_twice http://$SERVICE:8080/db 6

@@ -1,0 +1,19 @@
+
+services:
+  rails-mri:
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+
+  rails-truffle:
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+
+  rails-truffle-graalvm:
+    deploy:
+      resources:
+        limits:
+          cpus: 2

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+rm results.txt
+
+./bin/run_test rails-mri 1 1
+./bin/run_test rails-mri 2 1
+./bin/run_test rails-mri 3 1
+./bin/run_test rails-mri 4 1
+./bin/run_test rails-mri 1 2
+./bin/run_test rails-mri 2 2
+./bin/run_test rails-mri 3 2
+./bin/run_test rails-mri 4 2
+
+./bin/run_test rails-truffle 1 1
+./bin/run_test rails-truffle 2 1
+./bin/run_test rails-truffle 3 1
+./bin/run_test rails-truffle 4 1
+./bin/run_test rails-truffle 1 2
+./bin/run_test rails-truffle 2 2
+./bin/run_test rails-truffle 3 2
+./bin/run_test rails-truffle 4 2
+
+./bin/run_test rails-truffle-graalvm 1 1
+./bin/run_test rails-truffle-graalvm 2 1
+./bin/run_test rails-truffle-graalvm 3 1
+./bin/run_test rails-truffle-graalvm 4 1
+./bin/run_test rails-truffle-graalvm 1 2
+./bin/run_test rails-truffle-graalvm 2 2
+./bin/run_test rails-truffle-graalvm 3 2
+./bin/run_test rails-truffle-graalvm 4 2
