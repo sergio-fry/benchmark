@@ -4,6 +4,25 @@ require 'optparse'
 require 'open3'
 require 'byebug'
 
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: script.rb [options]"
+  opts.on("-s", "--service SERVICE", "Service to run") { |o| options[:service] = o }
+  opts.on("-t", "--rails-max-threads RAILS_MAX_THREADS", "Rails max threads") { |o| options[:rails_max_threads] = o.to_i }
+  opts.on("-c", "--cpus CPUS", "CPUs") { |o| options[:cpus] = o.to_i }
+  opts.on("-wn", "--warmup-number NUMBER", "Number of requests to warmup") { |o| options[:warmup_number] = o.to_i }
+  opts.on("-n", "--number NUMBER", "Number of requests to benchmark") { |o| options[:number] = o.to_i }
+  opts.on("-r", "--results PATH", "Path to write results") { |o| options[:results_file] = o }
+end.parse!
+
+service = options[:service] || "rails-mri"
+rails_max_threads = options[:rails_max_threads] || 1
+cpus = options[:cpus] || 1
+warmup_number = options[:warmup_number] || 1000
+number = options[:number] || 1000
+results_file = options[:results_file] || "results.txt"
+
 def run_command(command)
   stdout_and_stderr_s, status = Open3.capture2e(command)
 
@@ -19,6 +38,7 @@ def setup_environment(service, rails_max_threads, cpus)
 end
 
 def warmup(url, concurrency:, number:)
+  run_command("docker compose run --rm --remove-orphans -T bench ruby warmup.rb #{url}")
   run_command("docker compose run --rm --remove-orphans -T bench ab -k -n #{number} -c #{concurrency} #{url}")
 end
 
@@ -33,24 +53,6 @@ def benchmark_twice(url, concurrency:, name:, number:, results_file:)
   benchmark(url, concurrency:, name:, number:, results_file:)
   benchmark(url, concurrency:, name:, number:, results_file:)
 end
-
-options = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: script.rb [options]"
-  opts.on("-s", "--service SERVICE", "Service to run") { |o| options[:service] = o }
-  opts.on("-t", "--rails_max_threads RAILS_MAX_THREADS", "Rails max threads") { |o| options[:rails_max_threads] = o.to_i }
-  opts.on("-c", "--cpus CPUS", "CPUs") { |o| options[:cpus] = o.to_i }
-  opts.on("-wn", "--warmup-number NUMBER", "Number of requests to warmup") { |o| options[:warmup_number] = o.to_i }
-  opts.on("-n", "--number NUMBER", "Number of requests to benchmark") { |o| options[:number] = o.to_i }
-  opts.on("-r", "--results PATH", "Path to write results") { |o| options[:results_file] = o }
-end.parse!
-
-service = options[:service] || "rails-mri"
-rails_max_threads = options[:rails_max_threads] || 1
-cpus = options[:cpus] || 1
-warmup_number = options[:warmup_number] || 1000
-number = options[:number] || 1000
-results_file = options[:results_file] || "results.txt"
 
 setup_environment(service, rails_max_threads, cpus)
 

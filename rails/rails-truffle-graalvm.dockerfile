@@ -1,4 +1,4 @@
-FROM ghcr.io/sergio-fry/truffleruby-jvm
+FROM ghcr.io/sergio-fry/truffleruby-jvm:v24.2.1
 
 EXPOSE 8080
 WORKDIR /rails

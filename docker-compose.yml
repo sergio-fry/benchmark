@@ -42,6 +42,7 @@ services:
     build:
       dockerfile: rails-truffle-graalvm.dockerfile
       context: rails
+      platforms: [linux/amd64]
 
   tfb-database:
     build:

@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'rails', '~> 7.2.0'
+gem 'rails', '~> 8.0.2'
 gem 'redis', '~> 5.0'
 gem 'tzinfo-data'
 
@@ -9,7 +9,9 @@ group :mysql, optional: true do
 end
 
 group :postgresql, optional: true do
-  gem 'activerecord-jdbcpostgresql-adapter', platforms: :jruby
+  # disabled because jruby not working anywhere 
+  # gem 'activerecord-jdbcpostgresql-adapter', platforms: :jruby
+ 
   gem 'pg', '~> 1.5', platforms: %i[ruby mswin]
 end
 

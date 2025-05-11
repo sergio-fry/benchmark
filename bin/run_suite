@@ -1,32 +1,35 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 
-rm -f results.txt
+require 'optparse'
+require 'open3'
+require 'byebug'
 
-export RESULTS_FILES=results-`date`.txt
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: script.rb [options]"
+  opts.on("-c", "--cpus CPUS", "CPUs") { |o| options[:cpus] = o.to_i }
+  opts.on("-t", "--threads RAILS_THREADS", "Max Rails Threads") { |o| options[:rails_max_threads] = o.to_i }
+end.parse!
 
-./bin/run_test rails-mri 1 1
-./bin/run_test rails-mri 2 1
-./bin/run_test rails-mri 3 1
-./bin/run_test rails-mri 4 1
-./bin/run_test rails-mri 1 2
-./bin/run_test rails-mri 2 2
-./bin/run_test rails-mri 3 2
-./bin/run_test rails-mri 4 2
+cpus = options[:cpus] || 1
+threads = options[:rails_max_threads] || 1
 
-./bin/run_test rails-truffle 1 1
-./bin/run_test rails-truffle 2 1
-./bin/run_test rails-truffle 3 1
-./bin/run_test rails-truffle 4 1
-./bin/run_test rails-truffle 1 2
-./bin/run_test rails-truffle 2 2
-./bin/run_test rails-truffle 3 2
-./bin/run_test rails-truffle 4 2
+def run_command(command)
+  IO.popen(command) do |io|
+    io.each_line do |line|
+      puts line.chomp
+    end
+  end
+end
 
-./bin/run_test rails-truffle-graalvm 1 1
-./bin/run_test rails-truffle-graalvm 2 1
-./bin/run_test rails-truffle-graalvm 3 1
-./bin/run_test rails-truffle-graalvm 4 1
-./bin/run_test rails-truffle-graalvm 1 2
-./bin/run_test rails-truffle-graalvm 2 2
-./bin/run_test rails-truffle-graalvm 3 2
-./bin/run_test rails-truffle-graalvm 4 2
+def test(service, cpus:, threads:)
+  run_command "./bin/run_test -c #{cpus} -s #{service} --rails-max-threads #{threads}"
+end
+
+test("rails-mri", cpus:, threads:)
+test("rails-truffle", cpus:, threads:)
+test("rails-truffle-graalvm", cpus:, threads:)
+
+
+
+
