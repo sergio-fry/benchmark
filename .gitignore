@@ -1,1 +1,4 @@
 .env.runtime
+results*
+*.swp
+.byebug_history

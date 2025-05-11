@@ -1,6 +1,8 @@
 #!/bin/bash
 
-rm results.txt
+rm -f results.txt
+
+export RESULTS_FILES=results-`date`.txt
 
 ./bin/run_test rails-mri 1 1
 ./bin/run_test rails-mri 2 1

@@ -1,53 +1,73 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 
-SERVICE="$1"
-RAILS_MAX_THREADS="$2"
-CPUS="$3"
+require 'optparse'
+require 'open3'
+require 'byebug'
 
-rm .env.runtime
-echo "RAILS_MAX_THREADS=$RAILS_MAX_THREADS" >> .env.runtime
+def run_command(command)
+  stdout_and_stderr_s, status = Open3.capture2e(command)
 
-docker compose --env-file .env.runtime -f docker-compose.yml -f docker-compose.cpu$CPUS.yml up -d $SERVICE
+  stdout_and_stderr_s
+end
 
-docker compose run --rm -it bench ruby warmup.rb http://$SERVICE:8080/json
+def setup_environment(service, rails_max_threads, cpus)
+  File.delete('.env.runtime') if File.exist?('.env.runtime')
+  File.open('.env.runtime', 'w') do |file|
+    file.write("RAILS_MAX_THREADS=#{rails_max_threads}")
+  end
+  run_command("docker compose --env-file .env.runtime -f docker-compose.yml -f docker-compose.cpu#{cpus}.yml up -d #{service}")
+end
 
-#NUMBER=100000
-#WARMUP_TIME=120
-NUMBER=1000
-WARMUP_TIME=10
+def warmup(url, concurrency:, number:)
+  run_command("docker compose run --rm --remove-orphans -T bench ab -k -n #{number} -c #{concurrency} #{url}")
+end
 
-function warmup {
-  URL=$1
+def benchmark(url, name:, concurrency:, number:, results_file:)
+  command = "docker compose run --rm --remove-orphans -T -e TEST_NAME='#{name}' -e NUMBER=#{number} -e CONCURRENCY=#{concurrency} bench ruby benchmark2.rb #{url}"
+  result = run_command(command)
+  puts result
+  File.open(results_file, 'a') { |file| file.write(result.strip + "\n") }
+end
 
-  docker compose run --rm --remove-orphans -it bench ab -k -t $WARMUP_TIME -n 10000000 -c $RAILS_MAX_THREADS $URL
-}
-function benchmark {
-  URL=$1
-  CONCURRENCY=$2
+def benchmark_twice(url, concurrency:, name:, number:, results_file:)
+  benchmark(url, concurrency:, name:, number:, results_file:)
+  benchmark(url, concurrency:, name:, number:, results_file:)
+end
 
-  RESULT="`docker compose run --rm --remove-orphans -it -e TEST_NAME="cpu=$CPUS, rails_thread=$RAILS_MAX_THREADS, service=$SERVICE" -e NUMBER=$NUMBER -e CONCURRENCY=$CONCURRENCY bench ruby benchmark2.rb $URL`"
-  echo $RESULT
-  echo $RESULT >> results.txt
-}
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: script.rb [options]"
+  opts.on("-s", "--service SERVICE", "Service to run") { |o| options[:service] = o }
+  opts.on("-t", "--rails_max_threads RAILS_MAX_THREADS", "Rails max threads") { |o| options[:rails_max_threads] = o.to_i }
+  opts.on("-c", "--cpus CPUS", "CPUs") { |o| options[:cpus] = o.to_i }
+  opts.on("-wn", "--warmup-number NUMBER", "Number of requests to warmup") { |o| options[:warmup_number] = o.to_i }
+  opts.on("-n", "--number NUMBER", "Number of requests to benchmark") { |o| options[:number] = o.to_i }
+  opts.on("-r", "--results PATH", "Path to write results") { |o| options[:results_file] = o }
+end.parse!
 
-function benchmark_twice {
-  benchmark $1 $2
-  benchmark $1 $2
-}
+service = options[:service] || "rails-mri"
+rails_max_threads = options[:rails_max_threads] || 1
+cpus = options[:cpus] || 1
+warmup_number = options[:warmup_number] || 1000
+number = options[:number] || 1000
+results_file = options[:results_file] || "results.txt"
 
+setup_environment(service, rails_max_threads, cpus)
 
-warmup http://$SERVICE:8080/json
-benchmark_twice http://$SERVICE:8080/json 1
-benchmark_twice http://$SERVICE:8080/json 2
-benchmark_twice http://$SERVICE:8080/json 3
-benchmark_twice http://$SERVICE:8080/json 4
-benchmark_twice http://$SERVICE:8080/json 5
-benchmark_twice http://$SERVICE:8080/json 6
+name = "cpu=#{cpus}, rails_thread=#{rails_max_threads}, service=#{service}"
 
-warmup http://$SERVICE:8080/db
-benchmark_twice http://$SERVICE:8080/db 1
-benchmark_twice http://$SERVICE:8080/db 2
-benchmark_twice http://$SERVICE:8080/db 3
-benchmark_twice http://$SERVICE:8080/db 4
-benchmark_twice http://$SERVICE:8080/db 5
-benchmark_twice http://$SERVICE:8080/db 6
+warmup("http://#{service}:8080/json", concurrency: rails_max_threads, number: warmup_number)
+benchmark_twice("http://#{service}:8080/json", concurrency: 1, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/json", concurrency: 2, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/json", concurrency: 3, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/json", concurrency: 4, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/json", concurrency: 5, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/json", concurrency: 6, name:, number:, results_file:)
+
+warmup("http://#{service}:8080/db", concurrency: rails_max_threads, number: warmup_number)
+benchmark_twice("http://#{service}:8080/db", concurrency: 1, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/db", concurrency: 2, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/db", concurrency: 3, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/db", concurrency: 4, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/db", concurrency: 5, name:, number:, results_file:)
+benchmark_twice("http://#{service}:8080/db", concurrency: 6, name:, number:, results_file:)
